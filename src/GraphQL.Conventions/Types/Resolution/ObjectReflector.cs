@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using GraphQL.Conventions.Extensions;
 using GraphQL.Conventions.Handlers;
 using GraphQL.Conventions.Types.Descriptors;
 using GraphQL.Conventions.Types.Resolution.Extensions;
@@ -201,9 +202,12 @@ namespace GraphQL.Conventions.Types.Resolution
                 .ImplementedInterfaces
                 .SelectMany(iface => iface.GetMethods(DefaultBindingFlags));
 
+            var extensionMethods = typeInfo.GetExtensionMethods(typeInfo.Assembly);
+
             return typeInfo
                 .GetMethods(DefaultBindingFlags)
                 .Union(implementedMethods)
+                .Union(extensionMethods)
                 .Where(IsValidMember)
                 .Where(methodInfo => !methodInfo.IsSpecialName)
                 .Cast<MemberInfo>()
