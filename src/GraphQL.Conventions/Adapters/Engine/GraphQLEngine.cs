@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using GraphQL.Conventions.Adapters;
+using GraphQL.Conventions.Adapters.Engine.ErrorTransformations;
 using GraphQL.Conventions.Adapters.Engine.Listeners.DataLoader;
 using GraphQL.Conventions.Builders;
 using GraphQL.Conventions.Execution;
@@ -44,9 +45,13 @@ namespace GraphQL.Conventions
 
         List<System.Type> _middleware = new List<System.Type>();
 
+        IErrorTransformation _errorTransformation = new DefaultErrorTransformation();
+
         bool _includeFieldDescriptions;
 
         bool _includeFieldDeprecationReasons;
+
+        bool _exposeExceptions;
 
         class NoopValidationRule : IValidationRule
         {
@@ -171,6 +176,23 @@ namespace GraphQL.Conventions
             return WithMiddleware(typeof(T));
         }
 
+        public GraphQLEngine WithCustomErrorTransformation(IErrorTransformation errorTransformation)
+        {
+            _errorTransformation = errorTransformation;
+            return this;
+        }
+
+        /// <summary>
+        /// Enables <see cref="ExecutionOptions.ExposeExceptions"/> which leads to exception stack trace
+        /// be appended to the error message when serializing response.
+        /// </summary>
+        /// <param name="expose">Indicates whether to expose exceptions.</param>
+        public GraphQLEngine WithExposedExceptions(bool expose = true)
+        {
+            _exposeExceptions = expose;
+            return this;
+        }
+
         public GraphQLEngine PrintFieldDescriptions(bool include = true)
         {
             _includeFieldDescriptions = include;
@@ -257,7 +279,8 @@ namespace GraphQL.Conventions
                 UserContext = UserContextWrapper.Create(userContext, dependencyInjector ?? new WrappedDependencyInjector(_constructor.TypeResolutionDelegate)),
                 ValidationRules = rules != null && rules.Any() ? rules : null,
                 ComplexityConfiguration = complexityConfiguration,
-                CancellationToken = cancellationToken
+                CancellationToken = cancellationToken,
+                ExposeExceptions = _exposeExceptions
             };
 
             if (listeners != null && listeners.Any())
@@ -283,21 +306,9 @@ namespace GraphQL.Conventions
 
             var result = await _documentExecutor.ExecuteAsync(configuration).ConfigureAwait(false);
 
-            if (result.Errors != null)
+            if (result.Errors != null && _errorTransformation != null)
             {
-                var errors = new ExecutionErrors();
-                foreach (var executionError in result.Errors)
-                {
-                    var exception = new FieldResolutionException(executionError);
-                    var error = new ExecutionError(exception.Message, exception);
-                    foreach (var location in executionError.Locations ?? new ErrorLocation[0])
-                    {
-                        error.AddLocation(location.Line, location.Column);
-                    }
-                    error.Path = executionError.Path;
-                    errors.Add(error);
-                }
-                result.Errors = errors;
+                result.Errors = _errorTransformation.Transform(result.Errors);
             }
 
             return result;

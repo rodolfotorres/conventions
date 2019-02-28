@@ -39,7 +39,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="GraphQL" Version="2.1.0" />
+    <PackageReference Include="GraphQL" Version="2.4.0" />
   </ItemGroup>
   
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -47,6 +47,10 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DefineConstants>$(DefineConstants);RELEASE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
 </Project>
