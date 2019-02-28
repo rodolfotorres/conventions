@@ -102,7 +102,7 @@ namespace GraphQL.Conventions.Tests.Web
             var request = Request.New("{ \"query\": \"{ helloExtended(v: 10) }\" }");
             var response = await RequestHandler
                 .New()
-                .WithQuery<ExtendedQuery>()
+                .WithQueryAndExtensions<SimpleQuery>(typeof(QueryExtensions))
                 .Generate()
                 .ProcessRequest(request, null);
 
@@ -142,14 +142,14 @@ namespace GraphQL.Conventions.Tests.Web
         }
     }
 
-    class ExtendedQuery
+    class SimpleQuery
     {
-
+        public string Hello => "World";
     }
 
     static class QueryExtensions
     {
-        static string HelloExtended(this ExtendedQuery query, int v) => $"Extended-{v}";
+        static string HelloExtended(this SimpleQuery query, int v) => $"Extended-{v}";
     }
 
     namespace Unwanted

@@ -84,18 +84,6 @@ namespace GraphQL.Conventions.Tests.Builders
             }
         }
 
-        [Test]
-        public void Can_Construct_Schema_With_Extensions()
-        {
-            var schema = Schema<SchemaType4>();
-            schema.ShouldHaveQueries(3);
-            schema.ShouldHaveMutations(0);
-            schema.Query.ShouldHaveFieldWithName("foo");
-            schema.Query.ShouldHaveFieldWithName("baz");
-            schema.Query.ShouldHaveFieldWithName("fooExtension");
-            schema.Query.ShouldNotHaveFieldWithName("ignored");
-        }
-
         class SchemaType1
         {
             public QueryType1 Query { get; }
@@ -152,21 +140,5 @@ namespace GraphQL.Conventions.Tests.Builders
         {
             public bool UpdateSomethingIgnored() => false;
         }
-    }
-
-    class SchemaType4
-    {
-        public QueryType4 Query { get; }
-    }
-
-    class QueryType4
-    {
-        public bool Baz => false;
-        public string Foo(string pre) => $"{pre}-foo";
-    }
-
-    static class QueryType4Extensions
-    {
-        public static string FooExtension(this QueryType4 query) => "Extension";
     }
 }

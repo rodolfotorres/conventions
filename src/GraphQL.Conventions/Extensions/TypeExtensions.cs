@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -9,22 +7,20 @@ namespace GraphQL.Conventions.Extensions
     public static class TypeExtension
     {
         /// <summary>
-        /// This Methode extends the System.Type-type to get all extended methods. It searches hereby in all assemblies which are known by the current AppDomain.
+        /// Returns Extensions methods for a given type scoped to the extension typeinfo
         /// </summary>
         /// <remarks>
-        /// Insired by Jon Skeet from his answer on http://stackoverflow.com/questions/299515/c-sharp-reflection-to-identify-extension-methods
+        /// Inspired by Jon Skeet from his answer on http://stackoverflow.com/questions/299515/c-sharp-reflection-to-identify-extension-methods
         /// </remarks>
         /// <returns>returns MethodInfo[] with the extended Method</returns>
 
-        public static MethodInfo[] GetExtensionMethods(this TypeInfo t, Assembly assembly)
+        public static MethodInfo[] GetExtensionMethods(this TypeInfo typeInfo, TypeInfo extensionTypeInfo)
         {
-            var query = from type in assembly.GetTypes()
-                        where !type.IsNested
-                        from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                        where method.IsDefined(typeof(ExtensionAttribute), false)
-                        where method.GetParameters()[0].ParameterType == t.UnderlyingSystemType
-                        select method;
-            return query.ToArray<MethodInfo>();
+            return extensionTypeInfo != null && typeInfo != null ? 
+                extensionTypeInfo
+                    .GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                    .Where(m => m.IsDefined(typeof(ExtensionAttribute), false) && m.GetParameters()[0].ParameterType == typeInfo.UnderlyingSystemType)
+                    .ToArray() : new MethodInfo[] { };
         }
     }
 }
